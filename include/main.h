@@ -8,4 +8,12 @@
 
 int b_end;
 
+typedef struct queue_item queue_t;
+
+struct queue_item
+{
+    queue_t *pr_next;
+    int      i_keycode;
+};
+
 #endif

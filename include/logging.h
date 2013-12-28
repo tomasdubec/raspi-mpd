@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-#define LOG_LEVEL 5
+#define LOG_LEVEL 4
 
 #define LOG(LEVEL, LEVEL_NAME, format, ...) \
     do { \
@@ -15,6 +15,7 @@
     while(0);
 
 #define LOG_ERROR(format, ...) LOG(2, "ERROR", format, ##__VA_ARGS__)
+#define LOG_WARN(format, ...) LOG(3, "WARN", format, ##__VA_ARGS__)
 #define LOG_DEBUG(format, ...) LOG(4, "DEBUG", format, ##__VA_ARGS__)
 #define LOG_DEBUG2(format, ...) LOG(5, "DEBUG", format, ##__VA_ARGS__)
 

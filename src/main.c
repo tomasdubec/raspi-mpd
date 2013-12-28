@@ -6,8 +6,12 @@
 #include "main.h"
 #include "lcd.h"
 #include "mpd.h"
+#include "ctrl.h"
 
 int b_end = FALSE;
+
+queue_t *pr_input_queue = NULL;
+pthread_mutex_t r_input_queue_mutex;
 
 void signal_handler(int i_signal)
 {
@@ -22,16 +26,30 @@ void init(void)
 {
     wiringPiSetup();
 
-    set_line_text(1, "             booting             ");
-    set_line_text(2, "--------------------");
-    set_line_text(3, VERSION);
+    lcd_set_line_text(0, "                    ", TRUE);
+    lcd_set_line_text(1, "                    ", TRUE);
+    lcd_set_line_text(2, "                    ", TRUE);
+    lcd_set_line_text(3, VERSION, TRUE);
+
+    if(!mpd_init())
+    {
+        b_end = TRUE;
+        return;
+    }
+
+    if(pthread_mutex_init(&r_input_queue_mutex, NULL) != 0)
+    {
+        LOG_ERROR("Failed to initialize input queue mutex");
+        b_end = TRUE;
+        return;
+    }
 }
 
 int main(int argc, char **argv)
 {
     pthread_t thr_input;
     pthread_t thr_lcd;
-    pthread_t thr_mpd;
+    pthread_t thr_ctrl;
 
     init();
 
@@ -51,7 +69,7 @@ int main(int argc, char **argv)
         LOG_ERROR("Failed to create LCD thread");
         return(1);
     }
-    if(pthread_create( &thr_mpd, NULL, mpd_loop, NULL) != 0)
+    if(pthread_create( &thr_ctrl, NULL, ctrl_loop, NULL) != 0)
     {
         LOG_ERROR("Failed to create MPD thread");
         return(1);
@@ -59,7 +77,7 @@ int main(int argc, char **argv)
 
     pthread_join(thr_input, NULL);
     pthread_join(thr_lcd, NULL);
-    pthread_join(thr_mpd, NULL);
+    pthread_join(thr_ctrl, NULL);
 
     return 0;
 }
