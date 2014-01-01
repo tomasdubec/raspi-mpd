@@ -82,6 +82,21 @@ void ctrl_fsm(int i_keycode)
                 case BTN_OK:
                     switch(pc_btn_icons[i_btn_selected])
                     {
+                        case CHAR_PLAY:
+                            mpd_send_cmd(CMD_PLAY);
+                            break;
+                        case CHAR_PAUSE:
+                            mpd_send_cmd(CMD_PAUSE);
+                            break;
+                        case CHAR_NEXT:
+                            mpd_send_cmd(CMD_NEXT);
+                            break;
+                        case CHAR_PREV:
+                            mpd_send_cmd(CMD_PREV);
+                            break;
+                        case CHAR_STOP:
+                            mpd_send_cmd(CMD_STOP);
+                            break;
                         case CHAR_SPEAKER:
                             e_fsm_state = FSM_VOLUME;
                             break;
@@ -151,6 +166,9 @@ void *ctrl_loop(void *data)
                 }
                 break;
             case FSM_VOLUME:
+                l_volume = alsa_get_volume();
+                LOG_DEBUG("Got alsa volume: %d", l_volume);
+
                 memset(pc_tmp, ' ', 21);
                 pc_tmp[2] = (char)CHAR_SPEAKER;
                 pc_tmp[17] = (char)CHAR_SPEAKER;

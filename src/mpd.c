@@ -117,3 +117,34 @@ char *mpd_get_current_song_position(void)
 
     return pc_buf;
 }
+
+
+/* setters */
+int mpd_send_cmd(mpd_cmds_t e_cmd)
+{
+    struct mpd_status *pr_mpd_status;
+
+    switch(e_cmd)
+    {
+        case CMD_PAUSE:
+            mpd_send_toggle_pause(pr_mpd_conn);
+            pr_mpd_status = mpd_recv_status(pr_mpd_conn);
+            mpd_status_free(pr_mpd_status);
+            break;
+        case CMD_PLAY:
+            mpd_run_play(pr_mpd_conn);
+            break;
+        case CMD_NEXT:
+            mpd_run_next(pr_mpd_conn);
+            break;
+        case CMD_PREV:
+            mpd_run_previous(pr_mpd_conn);
+            break;
+        case CMD_STOP:
+            mpd_run_stop(pr_mpd_conn);
+            break;
+    }
+}
+
+
+
