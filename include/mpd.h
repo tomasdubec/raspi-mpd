@@ -15,7 +15,7 @@ int   mpd_init(void);
 /* getters */
 char *mpd_get_current_song(void);
 char *mpd_get_current_song_position(void);
-char *mpd_get_status(void);
+char  mpd_get_status(void);
 
 /* setters */
 int mpd_send_cmd(mpd_cmds_t e_cmd);

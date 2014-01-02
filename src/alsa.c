@@ -5,6 +5,8 @@
 long alsa_get_volume(void)
 {
     long                  l_vol;
+    long                  l_min;
+    long                  l_max;
     snd_mixer_t          *handle;
     snd_mixer_selem_id_t *sid;
     const char           *card = "default";
@@ -21,6 +23,8 @@ long alsa_get_volume(void)
     snd_mixer_elem_t* elem = snd_mixer_find_selem(handle, sid);
 
     snd_mixer_selem_get_playback_volume(elem, 0, &l_vol);
+    snd_mixer_selem_get_playback_volume_range(elem, &l_min, &l_max);
+    l_vol = pow(2, ((log2(100) * (l_vol - l_min)) / (l_max - l_min)));
 
     snd_mixer_close(handle);
 

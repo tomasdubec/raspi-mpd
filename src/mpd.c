@@ -10,12 +10,18 @@
 
 struct mpd_connection *pr_mpd_conn = NULL;
 
+struct mpd_status *mpd_get_mpd_status(void);
+
 int mpd_init(void)
 {
+    if(pr_mpd_conn != NULL)
+    {
+        mpd_connection_free(pr_mpd_conn);
+    }
     pr_mpd_conn = mpd_connection_new(NULL, 0, 30000);
     if (mpd_connection_get_error(pr_mpd_conn) != MPD_ERROR_SUCCESS)
     {
-        LOG_ERROR("Failed to connect to MPD: %s", mpd_connection_get_error_message(pr_mpd_conn));
+        LOG_ERROR("Failed to connect to MPD: %s (%d)", mpd_connection_get_error_message(pr_mpd_conn), mpd_connection_get_error(pr_mpd_conn));
         mpd_connection_free(pr_mpd_conn);
         return 0;
     }
@@ -76,6 +82,30 @@ char *mpd_get_current_song(void)
     return pc_buf;
 }
 
+struct mpd_status *mpd_get_mpd_status(void)
+{
+    struct mpd_status *pr_mpd_status;
+
+    mpd_send_status(pr_mpd_conn);
+    pr_mpd_status = mpd_recv_status(pr_mpd_conn);
+    if(pr_mpd_status == NULL && mpd_connection_get_error(pr_mpd_conn) != MPD_ERROR_CLOSED)
+    {
+        if(mpd_connection_get_error(pr_mpd_conn) != MPD_ERROR_CLOSED)
+        {
+            LOG_ERROR("MPD error: %s", mpd_connection_get_error_message(pr_mpd_conn));
+            return NULL;
+        }
+        else
+        {
+            LOG_WARN("Reconnecting to MPD");
+            mpd_init();
+            return mpd_get_mpd_status();
+        }
+    }
+
+    return pr_mpd_status;
+}
+
 char *mpd_get_current_song_position(void)
 {
     struct mpd_status *pr_mpd_status;
@@ -92,11 +122,9 @@ char *mpd_get_current_song_position(void)
         return NULL;
     }
 
-    mpd_send_status(pr_mpd_conn);
-    pr_mpd_status = mpd_recv_status(pr_mpd_conn);
+    pr_mpd_status = mpd_get_mpd_status();
     if(pr_mpd_status == NULL)
     {
-        LOG_ERROR("MPD error: %s", mpd_connection_get_error_message(pr_mpd_conn));
         free(pc_buf);
         return NULL;
     }
@@ -118,6 +146,36 @@ char *mpd_get_current_song_position(void)
     return pc_buf;
 }
 
+char mpd_get_status(void)
+{
+    struct mpd_status *pr_mpd_status;
+    char               c_status = ' ';
+
+    LOG_DEBUG("MPD getting current status");
+
+    pr_mpd_status = mpd_get_mpd_status();
+    if(pr_mpd_status == NULL)
+    {
+        return ' ';
+    }
+
+    switch(mpd_status_get_state(pr_mpd_status))
+    {
+        case MPD_STATE_PLAY:
+            c_status = CHAR_PLAY;
+            break;
+        case MPD_STATE_STOP:
+            c_status = CHAR_STOP;
+            break;
+        case MPD_STATE_PAUSE:
+            c_status = CHAR_PAUSE;
+            break;
+    }
+
+    mpd_status_free(pr_mpd_status);
+
+    return c_status;
+}
 
 /* setters */
 int mpd_send_cmd(mpd_cmds_t e_cmd)

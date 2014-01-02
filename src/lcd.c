@@ -4,7 +4,6 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
-#include <time.h>
 #include "logging.h"
 #include "main.h"
 #include "lcd.h"
@@ -140,9 +139,6 @@ void lcd_set_char(int i_x, int i_y, char c_char)
 void *lcd_loop(void *data)
 {
     int        i_index;
-    struct tm *pr_time;
-    time_t     r_time;
-    char       pc_time[21];
 
     LOG_DEBUG("LCD thread starting");
 
@@ -151,12 +147,6 @@ void *lcd_loop(void *data)
     while(!b_end)
     {
         LOG_DEBUG2("   ,--------------------,");
-
-        r_time = time(NULL);
-        pr_time = localtime(&r_time);
-        snprintf(pc_time, 21, "  8:00         %d:%02d", pr_time->tm_hour, pr_time->tm_min);
-        pc_time[0] = 1;
-        lcd_set_line_text(0, pc_time, FALSE);
 
         for(i_index = 0;i_index < 4;i_index++)
         {

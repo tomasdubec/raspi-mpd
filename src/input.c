@@ -6,6 +6,9 @@
 #include "input.h"
 #include "main.h"
 
+#define INPUT_LOOP_SLEEP 100000
+#define LONG_PRESS_THRESHOLD 10
+
 extern pthread_mutex_t r_input_queue_mutex;
 extern queue_t *pr_input_queue;
 
@@ -24,7 +27,8 @@ void input_init(void)
     pinMode(BTN_OK, INPUT);
     pullUpDnControl(BTN_OK, PUD_UP);
 
-    p_btn_pressed = input_push;
+    p_btn_pressed = NULL;
+    p_btn_depressed = input_push;
 }
 
 void input_push(int i_keycode)
@@ -61,12 +65,11 @@ void input_push(int i_keycode)
 void *input_loop(void *data)
 {
     int pi_last_state[8] = {1, 1, 1, 1, 1, 1, 1, 1};
+    int pi_down_time[8]  = {0, 0, 0, 0, 0, 0, 0, 0};
     int i_tmp;
     int i_index;
 
     LOG_DEBUG("Input thread starting");
-
-    p_btn_depressed = NULL;
 
     input_init();
 
@@ -75,7 +78,8 @@ void *input_loop(void *data)
         for(i_index = BTN_UP;i_index <= BTN_OK;i_index++)
         {
             i_tmp = digitalRead(i_index);
-            if(i_tmp != pi_last_state[i_index])
+            if(i_tmp != pi_last_state[i_index] &&
+               pi_down_time[i_index] == 0)
             {
                 if(i_tmp == 1)
                 {
@@ -86,7 +90,22 @@ void *input_loop(void *data)
                     if(p_btn_pressed != NULL) p_btn_pressed(i_index);
                 }
                 pi_last_state[i_index] = i_tmp;
+                pi_down_time[i_index] = 0;
                 LOG_DEBUG("Button %d was %spressed", i_index, i_tmp == 1 ? "de" : "");
+            }
+            else if(i_tmp == 0)
+            {
+                pi_down_time[i_index]++;
+                if(pi_down_time[i_index] >= LONG_PRESS_THRESHOLD)
+                {
+                    LOG_DEBUG("Button %d was long-pressed", i_index);
+                    if(p_btn_depressed != NULL) p_btn_depressed(i_index + LONG_PRESS_OFFSET);
+                    pi_down_time[i_index] = LONG_PRESS_THRESHOLD / 3;
+                }
+            }
+            else
+            {
+                pi_down_time[i_index] = 0;
             }
         }
 
