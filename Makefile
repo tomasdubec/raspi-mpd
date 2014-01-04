@@ -2,7 +2,7 @@ LFLAGS=-l pthread -l wiringPiDev -l wiringPi -l mpdclient -lasound -lm
 INCLUDE=include
 CFLAGS=-g
 
-all: objects/main.o objects/input.o objects/lcd.o objects/mpd.o objects/ctrl.o objects/alsa.o
+all: objects/main.o objects/input.o objects/lcd.o objects/mpd.o objects/ctrl.o objects/alsa.o objects/menu.o
 	gcc ${LFLAGS} objects/*.o -o raspi-mpd
 
 objects/main.o: src/main.c include/logging.h
@@ -22,6 +22,9 @@ objects/ctrl.o: src/ctrl.c include/logging.h
 
 objects/alsa.o: src/alsa.c include/logging.h
 	gcc -c ${CFLAGS} -I ${INCLUDE} src/alsa.c -o objects/alsa.o
+
+objects/menu.o: src/menu.c include/logging.h
+	gcc -c ${CFLAGS} -I ${INCLUDE} src/menu.c -o objects/menu.o
 
 clean:
 	rm -f objects/* 2> /dev/null

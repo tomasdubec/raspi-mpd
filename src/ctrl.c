@@ -7,6 +7,7 @@
 #include "mpd.h"
 #include "lcd.h"
 #include "input.h"
+#include "menu.h"
 
 #define MPD_DELAY 1000
 #define BUTTONS_CNT 6
@@ -16,7 +17,8 @@ typedef enum
     FSM_IDLE,
     FSM_IDLE_ALARM_CHANGED,
     FSM_MPD,
-    FSM_VOLUME
+    FSM_VOLUME,
+    FSM_MENU
 } fsm_states_t;
 
 char pc_btn_icons[BUTTONS_CNT] = { CHAR_PREV, CHAR_PLAY, CHAR_PAUSE, CHAR_STOP, CHAR_NEXT, CHAR_SPEAKER };
@@ -96,9 +98,18 @@ void ctrl_fsm(int i_keycode)
 
                     e_fsm_state = FSM_IDLE_ALARM_CHANGED;
                     break;
+                case BTN_OK + LONG_PRESS_OFFSET:
+                    e_fsm_state = FSM_MENU;
+                    break;
                 default:
                     e_fsm_state = FSM_MPD;
                     break;
+            }
+            break;
+        case FSM_MENU:
+            if(menu_input(i_keycode) == TRUE)
+            {
+                e_fsm_state = FSM_IDLE;
             }
             break;
         case FSM_MPD:
@@ -237,7 +248,9 @@ void *ctrl_loop(void *data)
                 lcd_set_line_text(2, NULL, TRUE);
                 lcd_set_line_text(3, NULL, TRUE);
                 break;
-
+            case FSM_MENU:
+                menu_draw();
+                break;
             case FSM_MPD:
                 if(i_delay == 0)
                 {
